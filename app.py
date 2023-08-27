@@ -5,47 +5,43 @@ import subprocess
 from colorama import init, Fore
 from Private import temp_file_cleaner, memory_optimizer, disk_cleaner, startup_optimizer
 
+# Initialize colorama
 init(autoreset=True)
-GITHUB_REPO_URL = "https://github.com/Rooshyy/Dengdro.git"
 
-CURRENT_VERSION = "1.0.0"
-LATEST_VERSION = "1.1.0"
+# Constants
+GITHUB_REPO_URL = "https://github.com/The-Only-Star/Dengdroo"
+CURRENT_VERSION = "1.1.1"
 CHANGELOG = {
-    "1.1.0": ["Added new optimization feature", "Fixed minor bugs"]
+    "1.0.0": ["Initial version"],
+    "1.0.1": ["Added internal update checking"],
+    "1.1.0": ["Integrated Git functionality to fetch updates from GitHub", "Improved error messaging for Git operations"],
+    "1.1.1": ["Enhanced the loading animation with new symbols"]
 }
 
 def fetch_latest_from_github():
     """Attempt to fetch the latest changes from GitHub."""
     try:
         result = subprocess.run(["git", "pull", GITHUB_REPO_URL], capture_output=True, text=True, check=True)
-        if "Already up to date." in result.stdout:
-            return False  # No updates found
-        else:
-            return True  # There were some updates
+        return "Already up to date." not in result.stdout
     except subprocess.CalledProcessError:
-        print(f"{Fore.RED}Error while checking for updates. Please ensure git is installed and your repo is correctly set up.")
+        print(f"{Fore.RED}Error while checking for updates. Ensure git is installed and your repo is set up correctly.")
         return False
 
-def check_for_updates():
-    return CURRENT_VERSION != LATEST_VERSION
+def is_new_version_available():
+    """Check if a new internal version is available."""
+    return CURRENT_VERSION != list(CHANGELOG.keys())[-1]
 
-def update_application():
-    global CURRENT_VERSION
-    CURRENT_VERSION = LATEST_VERSION
-    with open("update_log.txt", "a") as log:
-        log.write(f"Updated to version {LATEST_VERSION}\n")
-        for change in CHANGELOG[LATEST_VERSION]:
-            log.write(f"- {change}\n")
-        log.write("\n")
-
-def center_text(text, width=80):
-    for line in text.split('\n'):
-        print(line.center(width))
+def display_update_log():
+    """Display the changelog for the latest version."""
+    latest_version = list(CHANGELOG.keys())[-1]
+    print(f"{Fore.GREEN}Updated to version {latest_version}!")
+    for change in CHANGELOG[latest_version]:
+        print(f"- {change}")
 
 def loading_animation(duration=3):
+    """Display a rotating square as a loading animation."""
     end_time = time.time() + duration
     symbols = ["◢", "◣", "◤", "◥"]
-
     while time.time() < end_time:
         for symbol in symbols:
             sys.stdout.write('\r' + f'Loading {symbol}')
@@ -56,10 +52,7 @@ def loading_animation(duration=3):
 
 def display_colored_logo():
     colors = [Fore.RED, Fore.GREEN]
-    for index, line in enumerate(LOGO.strip().split('\n')):
-        print(colors[index % 2] + line.center(80))
-
-LOGO = '''
+    logo = '''
 ________                         ____       .___                   
 \______ \     ____     ____     / ___\    __| _/ _______    ____   
  |    |  \  _/ __ \   /    \   / /_/  >  / __ |  \_  __ \  /  _ \  
@@ -67,47 +60,55 @@ ________                         ____       .___
 /_______  /  \___  > |___|  / /_____/   \____ |   |__|     \____/  
         \/       \/       \/                 \/                    
 '''
-
-MENU_OPTIONS = {
-    "1": ("Clear Temp Files", temp_file_cleaner.clean_temp_files),
-    "2": ("Optimize Memory", memory_optimizer.optimize_memory),
-    "3": ("Clean Disk", disk_cleaner.clean_disk),
-    "4": ("List Startup Programs", startup_optimizer.list_startup_programs),
-}
+    for index, line in enumerate(logo.strip().split('\n')):
+        print(colors[index % 2] + line.center(80))
 
 def display_menu():
-    menu = [f"{Fore.LIGHTBLACK_EX}{key}. {value[0]}" for key, value in MENU_OPTIONS.items()]
-    menu.append(f"{Fore.LIGHTBLACK_EX}5. Exit")
-    center_text("\n".join(menu))
+    menu_options = {
+        "1": ("Clear Temp Files", temp_file_cleaner.clean_temp_files),
+        "2": ("Optimize Memory", memory_optimizer.optimize_memory),
+        "3": ("Clean Disk", disk_cleaner.clean_disk),
+        "4": ("List Startup Programs", startup_optimizer.list_startup_programs),
+        "5": ("Exit", exit)
+    }
+    
+    for key, value in menu_options.items():
+        print(f"{Fore.LIGHTBLACK_EX}{key}. {value[0]}")
 
 def main():
-    # Check for GitHub updates at the start of the application.
+    # Check for GitHub updates
     should_check_github = input("Do you want to check for updates on GitHub? (Y/N): ").lower()
     if should_check_github == 'y':
         if fetch_latest_from_github():
-            print(f"{Fore.GREEN}Updates were fetched from GitHub! Please restart the application to see the changes.")
+            display_update_log()
             sys.exit(0)
         else:
             print(f"{Fore.LIGHTBLACK_EX}Your application is already up-to-date!")
 
-    # Check for internal version updates
-    if check_for_updates():
+    # Check for internal updates
+    if is_new_version_available():
         should_update = input("New internal updates are available. Do you want to update now? (Y/N): ").lower()
         if should_update == 'y':
-            update_application()
-            print(f"{Fore.LIGHTBLACK_EX}Application updated to version {LATEST_VERSION}!")
+            display_update_log()
             input("\nPress enter to continue...")
-    
+
+    # Main loop
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         display_colored_logo()
         display_menu()
-        
-        choice = input("\nEnter your choice: ")
 
-        if choice in MENU_OPTIONS:
+        choice = input("\nEnter your choice: ")
+        if choice in ["1", "2", "3", "4"]:
             loading_animation()
-            MENU_OPTIONS[choice][1]()
+            if choice == "1":
+                temp_file_cleaner.clean_temp_files()
+            elif choice == "2":
+                memory_optimizer.optimize_memory()
+            elif choice == "3":
+                disk_cleaner.clean_disk()
+            elif choice == "4":
+                startup_optimizer.list_startup_programs()
         elif choice == "5":
             print(f"{Fore.RED}Exiting Dengdro...")
             break

@@ -9,7 +9,7 @@ from Private import temp_file_cleaner, memory_optimizer, disk_cleaner, startup_o
 init(autoreset=True)
 
 # Constants
-GITHUB_REPO_URL = "https://github.com/The-Only-Star/Dengdroo"
+GITHUB_REPO_URL = "https://github.com/VVoiddd/Dengdroo"
 CURRENT_VERSION = "1.1.1"
 CHANGELOG = {
     "1.0.0": ["Initial version"],
